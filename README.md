@@ -1,41 +1,62 @@
-# Coca-Cola Data Analysis — SQL Portfolio
+# Coca-Cola Stock & Sentiment Analysis (SQL)
 
-## Project Overview
-SQL analysis of Coca-Cola stock prices, brand sentiment from social media, 
-and product portfolio data using PostgreSQL.
+PostgreSQL analysis of Coca-Cola's 2019–2023 stock performance and sentiment patterns in labeled social-media data — 149,192 rows across 6 tables, queried in PostgreSQL 17 / pgAdmin 4.
 
-Built as part of my SQL learning journey, working with real datasets 
-and hands-on database management in pgAdmin 4.
+All queries: [`coca_cola_analysis.sql`](coca_cola_analysis.sql) · Schema: [`schema.sql`](schema.sql)
 
-## Database
-- **Tool:** PostgreSQL 17 + pgAdmin 4
-- **Total rows:** 149,192 across 6 tables
+## Key findings
 
-## Tables
-| Table | Rows | Description |
+- **The stock fell 37.5% peak-to-trough in the early-2020 COVID crash** and did not close above its pre-crash peak again until **4 January 2022** — a recovery of nearly two years. *(§3.5–3.6)*
+- **2022 was the strongest year** in the window: average close $61–62, yearly high $67.20. *(§3.3)*
+- **Sentiment in the tweet corpus is ~23% positive**, with negative tweets outnumbering positive roughly 2:1 — a typical skew for social-media text. *(§2.1)*
+- **Corpus sentiment does not track the stock.** Monthly positive-tweet share stayed in a narrow ~22–24% band across all of 2022–2023 while the average close moved between $56.63 and $64.53 — no co-movement. This is the expected result: the corpus is general social-media text, not Coca-Cola mentions (see Limitations). *(§6.1)*
+
+## Data
+
+| Table | Rows | Contents |
 |---|---|---|
-| coca_cola_stock | 1,258 | Daily stock prices 2019–2023 |
-| tweets | 87,619 | Social media sentiment data |
-| imdb_reviews | 50,000 | Product/brand reviews |
-| yelp_reviews | 10,000 | Business reviews |
-| brand_sentiment_summary | 300 | Sentiment aggregated by country and month |
-| products | 15 | Coca-Cola product catalog |
+| `coca_cola_stock` | 1,258 | Daily OHLCV prices, Jan 2019 – Dec 2023 |
+| `tweets` | 87,619 | Sentiment-labeled tweets with country, likes, retweets — dated Jan 2022 – Jun 2024 |
+| `brand_sentiment_summary` | 300 | Monthly positive/negative mention counts across 10 countries |
+| `products` | 15 | Coca-Cola product catalog: category, launch year, calories, status |
+| `yelp_reviews` | 10,000 | Supplementary sentiment-labeled review corpus (not Coca-Cola-specific) |
+| `imdb_reviews` | 50,000 | Supplementary sentiment-labeled movie-review corpus (not Coca-Cola-specific) |
 
-## Key Findings
-- Coca-Cola stock dropped 28% during COVID (March 2020) but recovered within months
-- Public sentiment on Twitter is consistently ~23% positive across 2022–2024
-- Negative tweets outnumber positive ones 2:1 — typical for social media data
-- 2022 was the best stock year, averaging $61–62 with a high of $67.20
+Stock and tweet data overlap only in **2022–2023**, so all cross-table analysis (§6) is restricted to that window.
 
-## SQL Concepts Covered
-- SELECT, WHERE, GROUP BY, ORDER BY, LIMIT
-- Aggregate functions: COUNT, SUM, AVG, MIN, MAX, ROUND
-- CASE WHEN statements
-- Subqueries
-- UNION ALL
-- EXTRACT for date analysis
+**Sources:** Kaggle (stock, products), TweetEval / Sentiment140-style labeled corpora (text data). Sentiment labels ship with the source datasets — no classification model was run in this project.
 
-## Tools Used
-- PostgreSQL 17
-- pgAdmin 4
-- Data sources: Kaggle, TweetEval, Sentiment140
+## Questions the analysis answers
+
+Each section of `coca_cola_analysis.sql` answers a concrete question:
+
+1. **Exploration** — What's in the database? Row counts, date coverage, product catalog.
+2. **Sentiment** — How does sentiment split overall, by country, and by year? Do positive tweets earn more likes and retweets than negative ones?
+3. **Stock** — What were the best and worst trading days? How did yearly averages, highs, and lows evolve? How deep was the 2020 drawdown, and when did the price truly recover?
+4. **Products** — How does the portfolio break down by category and calories? How many products are discontinued?
+5. **Supplementary corpora** — Rating and sentiment distributions in the Yelp and IMDB sets.
+6. **Cross-table** — Joining daily tweet sentiment to daily closing price: did monthly sentiment and average price move together across 2022–2023?
+
+## Reproduce
+
+1. PostgreSQL 17 + pgAdmin 4
+2. Run `schema.sql` to create the six tables
+3. Import the source CSVs (pgAdmin → Import/Export)
+4. Run `coca_cola_analysis.sql` section by section
+
+## Limitations
+
+- Sentiment labels are inherited from the upstream datasets, not computed here; label quality is that of the source corpora.
+- **The tweet corpus is general labeled Twitter text, not Coca-Cola mentions** — confirmed by inspecting the highest-engagement tweets (§2.4), which cover sports, music, TV, and politics. Several top tweets reference events that predate their timestamps, so the date, country, and engagement fields appear to be assigned by the dataset rather than original tweet metadata. No brand-level conclusions are drawn from this table.
+- The tweet and stock datasets overlap only in 2022–2023; sentiment around the 2020 crash cannot be examined with this data.
+- The Yelp and IMDB tables are unrelated to Coca-Cola; they are included only as additional labeled corpora for sentiment-distribution queries.
+- All findings are descriptive aggregations over historical data — no causal claims.
+
+## Possible next steps
+
+- Build a corpus of genuine Coca-Cola mentions (e.g., keyword-filtered brand data) and rerun §6 against real brand sentiment.
+- Compute sentiment directly in Python (VADER or a transformer model) instead of relying on pre-assigned labels, and compare against them.
+
+---
+
+**Author:** Imron Mamatkulov · [GitHub](https://github.com/imronmamatkulov0161) · [LinkedIn](https://linkedin.com/in/imron-mamatkulov)
